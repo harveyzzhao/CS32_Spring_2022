@@ -1,0 +1,195 @@
+problem 1e)
+In case 3, we push_back 5 elements with value MAGIC on top of the already established 5-element vector. Since the capacity of the original vector is less than 5+5 = 10, the compiler reallocates the vector and expanded its capacity so that it's greater or equal to 10. However, we didn't reassign our iterator to the memory in the newly allocated vector and it still points to the 2nd index in the original vector after the reallocation. This leads to undefined behavior when k > 4, as we are trying to access garbage value and compare it with MAGIC. What's worse, this would be an infinite loop if we don't have the if (k >= 20) stopping condition, as we don't know where the end of the new vector is at, and the for loop would continue increment p's position in the memory until it reaches v2.end(). Therefore, we would first receive "Item#5 is ..., not 11223344", ... and then "Failed test 3" after we triggered the stopping condition after iteration 20.
+
+==================================================================================
+Problem 3.
+template<typename ItemType>
+int Sequence<ItemType>::insert(const ItemType& value)
+{
+      // Find the Node before which to insert
+    Sequence<ItemType>::Node* p;
+    int pos;
+    for (p = m_head->m_next, pos = 0; p != m_head  &&
+                                value > p->m_value; p = p->m_next, pos++)
+        ;	//this for loop compares the value of our new node with each value of our previously established nodes in the list, but we cannot possibly determine if Coord(40, 10) is greater than Coord(50, 20) at index 0, since we have not overloaded the greater than operator. Therefore, a compilation error would arise.
+
+      // Insert the value there
+    insertBefore(p, value);
+    return pos;
+}
+
+==================================================================================
+Problem 4. b)
+There is no way we could possibly know the path of each subdomains, as the child recursive functions of the parents have no idea what the parent functions know. It is impossible to display the websites in this order with one argument function.
+the recursive function itself is still a function, and if we attempt to initialize or update any new variables inside the function, we couldn't have kept it after the end of the current function. Since each class only keeps the information of its children class but does not keep track of the information of its parents class, we cant fetch the name of the items closer to the root with a single children class pointer. Since we rely on Domain* variable to access the subclasses and the name of the current class, we have already taken up that one parameter slot. This leaves no more room for us to update the name of the current branch. As a result, any classes except for the base class will have the wrong output/ with only its name instead of a complete branch of names.
+
+==================================================================================
+Problem 5. a) 
+//since there are three for loops each starting from 0 and stop at N, the time complexity for this algorithm is O(N^3).
+
+//annotated version of the algorithm
+const int N = some value;
+bool isFriend[N][N];
+...
+int numMutualFriends[N][N];
+for (int i = 0; i < N; i++)	//O(N^3)
+{
+    numMutualFriends[i][i] = -1;  // the concept of mutual friend
+			          // makes no sense in this case
+    for (int j = 0; j < N; j++)	//O(N^2)
+    {
+        if (i == j)
+            continue;
+        numMutualFriends[i][j] = 0;
+        for (int k = 0; k < N; k++)	//O(N)
+        {
+            if (k == i  ||  k == j)
+                continue;
+	    if (isFriend[i][k]  &&  isFriend[k][j])	//
+        	numMutualFriends[i][j]++;
+       }
+    }
+}
+
+==================================================================================
+Problem 5.b)
+The time complexity of the algorithm is still O(N^3), because although the stopping condition of the second loop only goes up until the i, the time complexity for that loop would be O(1 + 2 + ... + N - 1), which is approximately O(N(N+1) / 2) ==> O(N^2).
+Since there is another for loop from 0 to N atop of the second for loop, the overall time complexity of this algorithm is still O(N^3).
+
+==================================================================================
+Problem 6.a)
+//The time complexity for interleave is O(N^2).
+//The explanation for the function is given below.
+
+//Overall timecomplexity is O(N^2) as this is the highest term of the time complexity of each section in interleave().
+void interleave(const Sequence& seq1, const Sequence& seq2, Sequence& result)
+{
+    Sequence res;
+
+    int n1 = seq1.size();
+    int n2 = seq2.size();
+    int nmin = (n1 < n2 ? n1 : n2);	//Finding the smaller index
+    int resultPos = 0;
+    for (int k = 0; k < nmin; k++)	//O(N^2)
+    {
+        ItemType v;
+        seq1.get(k, v);	//Time Complexity: O(N)
+        res.insert(resultPos, v);	//O(N)
+        resultPos++;	//O(1)
+        seq2.get(k, v);	//Time Complexity: O(N)
+        res.insert(resultPos, v);	//O(N)
+        resultPos++;	//O(1)
+    }
+
+    const Sequence& s = (n1 > nmin ? seq1 : seq2);	//O(1)
+    int n = (n1 > nmin ? n1 : n2);	O(1)
+    for (int k = nmin ; k < n; k++)	//O(N^2)
+    {
+        ItemType v;	//O(1)
+        s.get(k, v);	//O(N)
+        res.insert(resultPos, v);	//O(N)
+        resultPos++;	//O(1)
+    }	
+
+    result.swap(res); //O(1)
+}
+
+//////////////////////////////////////////////////////////////////////////////////
+////////////The time complexity for the called functions are given below./////////
+//////////////////////////////////////////////////////////////////////////////////
+Time Complexity: O(N)
+int Sequence::insert(int pos, const ItemType& value)
+{
+    if (pos < 0  ||  pos > m_size)
+        return -1;
+
+    Node* p = nodeAtPos(pos);	//O(N)
+    insertBefore(p, value);	//O(1)
+
+    return pos;
+}
+
+Time Complexity: O(1)
+void Sequence::insertBefore(Node* p, const ItemType& value)
+{
+      // Create a new node
+
+    Node* newp = new Node;	//O(1)
+    newp->m_value = value;	//O(1)
+
+      // Insert new item before p
+
+    newp->m_prev = p->m_prev;	//O(1)
+    newp->m_next = p;	//O(1)
+    newp->m_prev->m_next = newp;	//O(1)
+    newp->m_next->m_prev = newp;	//O(1)
+
+    m_size++;	//O(1)
+}
+
+Time Complexity: O(N)
+bool Sequence::get(int pos, ItemType& value) const
+{
+    if (pos < 0  ||  pos >= m_size)
+        return false;
+
+    Node* p = nodeAtPos(pos);	//O(N) - traversal of the linked list
+    value = p->m_value;	//O(1)
+    return true;
+}
+
+Time complexity: O(N)
+Sequence::Node* Sequence::nodeAtPos(int pos) const
+{
+    Node* p;
+
+      // If pos is closer to the head of the list, go forward to find it.
+      // Otherwise, start from tail and go backward.
+
+    if (pos <= m_size / 2)  // closer to head
+    {
+        p = m_head->m_next;
+        for (int k = 0; k != pos; k++)	//O(N)
+            p = p->m_next;
+    }
+    else  // closer to tail
+    {
+        p = m_head;
+        for (int k = m_size; k != pos; k--)	//O(N)
+            p = p->m_prev;
+    }
+
+    return p;
+}
+
+
+//Problem 6b)
+
+//The Overall time complexity of this function is O(N), because no section of the interleave function has a time complexity of more than O(N). It is better than the implementation of interleave() in part a.
+
+void Sequence::interleave(const Sequence& seq1, const Sequence& seq2)
+{
+    Sequence res;
+
+    Node* p1 = seq1.m_head->m_next;	//O(1)
+    Node* p2 = seq2.m_head->m_next;	//O(1)
+
+    //O(N) - circular doubly linked list impl
+    for ( ; p1 != seq1.m_head  &&  p2 != seq2.m_head;
+                                            p1 = p1->m_nexxt, p2 = p2->m_next)
+    {
+        res.insertBefore(res.m_head, p1->m_value);	//O(1)
+        res.insertBefore(res.m_head, p2->m_value);	//O(1)
+    }
+
+    Node* p    = (p1 != seq1.m_head ? p1 : p2);	//O(1)
+    Node* pend = (p1 != seq1.m_head ? seq1 : seq2).m_head;	//O(1)
+
+    for ( ; p != pend; p = p->m_next)	//O(N) - visit the node that has a surplus of nodes. O(N-k) rounds to O(N)
+        res.insertBefore(res.m_head, p->value);	//O(1)
+
+      // Swap *this with res
+    swap(res);	//O(1) - explained above
+      // Old value of *this (now in res) is destroyed when function returns.
+}
+
